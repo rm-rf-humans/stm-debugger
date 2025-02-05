@@ -7,6 +7,9 @@
 #define HEARTBEAT_TIMEOUT 1500    
 #define MAX_JITTER 50             
 
+#define FREQ_CHECK_INTERVAL 1000
+#define BUS_WARNING_THRESHOLD 1000
+
 typedef enum {
     DEVICE_OK = 0,
     DEVICE_WARNING = 1,
@@ -22,6 +25,13 @@ typedef struct {
     uint8_t status : 2;  
 } Device;
 
+typedef struct {
+    uint32_t message_count;
+    uint32_t last_check_time;
+    uint32_t current_frequency;
+    uint32_t peak_frequency;
+} BusMonitor;
+
 Device devices[NUM_DEVICES] = {
     {0x01, 0, 0, 0, DEVICE_ERROR},  
     {0x02, 0, 0, 0, DEVICE_ERROR},  
@@ -29,7 +39,8 @@ Device devices[NUM_DEVICES] = {
     {0x10, 0, 0, 0, DEVICE_ERROR}   
 };
 
-volatile uint32_t current_time_ms = 0;  
+volatile uint32_t current_time_ms = 0;
+BusMonitor bus_monitor = {0, 0, 0, 0};
 
 void log_error(const char* message, uint8_t device_id) {
     printf("[ERROR] Device 0x%X: %s\n", device_id, message);
@@ -37,6 +48,38 @@ void log_error(const char* message, uint8_t device_id) {
 
 void log_warning(const char* message, uint8_t device_id) {
     printf("[WARNING] Device 0x%X: %s\n", device_id, message);
+}
+
+void log_info(const char* message) {
+    printf("[INFO] %s\n", message);
+}
+
+void update_bus_frequency(void) {
+    bus_monitor.message_count++;
+    
+    if (current_time_ms - bus_monitor.last_check_time >= FREQ_CHECK_INTERVAL) {
+        bus_monitor.current_frequency = bus_monitor.message_count;
+        
+        if (bus_monitor.current_frequency > bus_monitor.peak_frequency) {
+            bus_monitor.peak_frequency = bus_monitor.current_frequency;
+        }
+        
+        if (bus_monitor.current_frequency > BUS_WARNING_THRESHOLD) {
+            char msg[50];
+            sprintf(msg, "High bus usage: %lu msg/s", bus_monitor.current_frequency);
+            log_warning(msg, 0xFF);
+        }
+        
+        bus_monitor.message_count = 0;
+        bus_monitor.last_check_time = current_time_ms;
+    }
+}
+
+
+void print_bus_stats(void) {
+    printf("\n=== Bus Statistics ===\n");
+    printf("Current frequency: %lu messages/second\n", bus_monitor.current_frequency);
+    printf("Peak frequency: %lu messages/second\n", bus_monitor.peak_frequency);
 }
 
 void process_heartbeat(uint8_t sender_id, uint8_t sequence_num) {
@@ -86,13 +129,18 @@ void check_heartbeats() {
 }
 
 void CAN_Receive_Callback(uint8_t sender_id, uint8_t sequence_num) {
+    update_bus_frequency(); 
     process_heartbeat(sender_id, sequence_num);
 }
 
 void TIM2_IRQHandler(void) {
     if (TIM2->SR & TIM_SR_UIF) {  
         TIM2->SR &= ~TIM_SR_UIF;
-        check_heartbeats();  
+        check_heartbeats();
+        
+        if (current_time_ms % 5000 == 0) {
+            print_bus_stats();
+        }
     }
 }
 
@@ -102,7 +150,8 @@ void SysTick_Handler(void) {
 
 void setup() {
     SysTick_Config(SystemCoreClock / 1000);  
-    TIM2->CR1 |= TIM_CR1_CEN;  
+    TIM2->CR1 |= TIM_CR1_CEN;
+    bus_monitor.last_check_time = current_time_ms;
 }
 
 void main_loop() {
