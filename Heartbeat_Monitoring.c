@@ -1,9 +1,9 @@
 #include "stm32f4xx.h" 
-#include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_can.h"
 #include "stm32f4xx_hal_tim.h"
 #include "stdbool.h"
 #include "stdint.h"
+
 #define NUM_DEVICES 4  
 #define HEARTBEAT_INTERVAL 1000   
 #define HEARTBEAT_TIMEOUT 1500    
@@ -12,8 +12,6 @@
 
 #define FREQ_CHECK_INTERVAL 1000
 #define BUS_WARNING_THRESHOLD 1000
-
-CAN_HandleTypeDef hcan;
 
 typedef enum {
     DEVICE_OK = 0,
@@ -59,8 +57,6 @@ volatile uint32_t current_time_ms = 0;
 void log_error(const char* message, uint8_t device_id) {
     printf("[ERROR] Device 0x%X: %s\n", device_id, message);
 }
-
-void Error_Handler(void);
 
 void log_warning(const char* message, uint8_t device_id) {
     printf("[WARNING] Device 0x%X: %s\n", device_id, message);
@@ -224,55 +220,4 @@ void main_loop() {
 
 int main(){
     HAL_Init();
-    MX_CAN_Init();
-    
 }
-
-static void MX_CAN_Init(void)
-{
-    /* Configure the CAN peripheral instance */
-    hcan.Instance = CAN1;
-    hcan.Init.Prescaler = 16;                // Adjust prescaler for desired CAN bit rate
-    hcan.Init.Mode = CAN_MODE_NORMAL;        // Normal mode
-    hcan.Init.SyncJumpWidth = CAN_SJW_1TQ;
-    hcan.Init.TimeSeg1 = CAN_BS1_1TQ;
-    hcan.Init.TimeSeg2 = CAN_BS2_1TQ;
-    hcan.Init.TimeTriggeredMode = DISABLE;
-    hcan.Init.AutoBusOff = DISABLE;
-    hcan.Init.AutoWakeUp = DISABLE;
-    hcan.Init.AutoRetransmission = ENABLE;
-    hcan.Init.ReceiveFifoLocked = DISABLE;
-    hcan.Init.TransmitFifoPriority = DISABLE;
-
-    if (HAL_CAN_Init(&hcan) != HAL_OK)
-    {
-        Error_Handler();
-    }
-
-    /* Configure a CAN filter to accept all messages */
-    CAN_FilterTypeDef canFilter;
-    canFilter.FilterActivation = ENABLE;
-    canFilter.FilterBank = 0;
-    canFilter.FilterFIFOAssignment = CAN_RX_FIFO0;
-    canFilter.FilterIdHigh = 0x0000;
-    canFilter.FilterIdLow = 0x0000;
-    canFilter.FilterMaskIdHigh = 0x0000;
-    canFilter.FilterMaskIdLow = 0x0000;
-    canFilter.FilterMode = CAN_FILTERMODE_IDMASK;
-    canFilter.FilterScale = CAN_FILTERSCALE_32BIT;
-
-    if (HAL_CAN_ConfigFilter(&hcan, &canFilter) != HAL_OK)
-    {
-        Error_Handler();
-    }
-}
-
-void Error_Handler(void)
-{
-    /* User can add his own implementation to report the HAL error return state */
-    while (1)
-    {
-        // Stay here if there is an error
-    }
-}
-
