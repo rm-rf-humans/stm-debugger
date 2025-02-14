@@ -1,0 +1,17 @@
+../Core/Src/main.c:67:6:process_heartbeat	24	static
+../Core/Src/main.c:74:6:check_heartbeats	16	static
+../Core/Src/main.c:84:6:process_thruster_current	16	static
+../Core/Src/main.c:90:6:process_thruster_pwm	16	static
+../Core/Src/main.c:96:6:process_imu	40	static
+../Core/Src/main.c:101:6:process_arm	16	static
+../Core/Src/main.c:107:6:process_depth	16	static
+../Core/Src/main.c:111:6:process_indicator	16	static
+../Core/Src/main.c:115:6:CAN_Receive_Callback	24	static
+../Core/Src/main.c:144:6:log_error	4	static
+../Core/Src/main.c:148:6:log_warning	4	static
+../Core/Src/main.c:152:6:log_info	4	static
+../Core/Src/main.c:175:5:main	8	static
+../Core/Src/main.c:196:6:SystemClock_Config	88	static
+../Core/Src/main.c:243:13:MX_SPI1_Init	8	static
+../Core/Src/main.c:281:13:MX_GPIO_Init	40	static
+../Core/Src/main.c:313:6:Error_Handler	4	static,ignoring_inline_asm
