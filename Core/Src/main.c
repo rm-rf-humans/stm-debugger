@@ -142,15 +142,15 @@ void CAN_Receive_Callback() {
 }
 
 void log_error(const char *format, ...) {
-    // Implement logging mechanism (UART, file, etc.)
+    // In Progress
 }
 
 void log_warning(const char *format, ...) {
-    // Implement warning mechanism
+    // In Progress
 }
 
 void log_info(const char *format, ...) {
-    // Implement info logging
+    // In Progress
 }
 
 /* USER CODE END PV */
